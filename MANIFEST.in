@@ -1,0 +1,18 @@
+include MANIFEST.in
+include requirements.txt
+include *.json
+include *.md
+include *.py
+include *.txt
+recursive-include razorpay_integration *.css
+recursive-include razorpay_integration *.csv
+recursive-include razorpay_integration *.html
+recursive-include razorpay_integration *.ico
+recursive-include razorpay_integration *.js
+recursive-include razorpay_integration *.json
+recursive-include razorpay_integration *.md
+recursive-include razorpay_integration *.png
+recursive-include razorpay_integration *.py
+recursive-include razorpay_integration *.svg
+recursive-include razorpay_integration *.txt
+recursive-exclude razorpay_integration *.pyc
