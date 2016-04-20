@@ -1,2 +1,2 @@
-# rajorpay_integration
-Rajorpay integration with Frappe/ERPNext
+# razorpay_integration
+Razorpay Integration with Frappe/ERPNext
