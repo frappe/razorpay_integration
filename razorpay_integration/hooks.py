@@ -70,34 +70,21 @@ app_license = "MIT"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-#	}
-# }
+doc_events = {
+	"Payment Request": {
+		"get_payment_url": "razorpay_integration.utils.get_payment_url"
+	}
+}
 
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"razorpay_integration.tasks.all"
-# 	],
-# 	"daily": [
-# 		"razorpay_integration.tasks.daily"
-# 	],
-# 	"hourly": [
-# 		"razorpay_integration.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"razorpay_integration.tasks.weekly"
-# 	]
-# 	"monthly": [
-# 		"razorpay_integration.tasks.monthly"
-# 	]
-# }
+scheduler_events = {
+	"all": [
+		"razorpay_integration.razorpay_integration.doctype.razorpay_express_payment.razorpay_express_payment.authorise_payment",
+		"razorpay_integration.razorpay_integration.doctype.razorpay_express_payment.razorpay_express_payment.capture_payment"
+	]
+}
 
 # Testing
 # -------
