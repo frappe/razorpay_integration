@@ -12,13 +12,12 @@ $(document).ready(function(){
 			"prefill": {
 				"name": "{{ customer_name }}",
 				"email": "{{ doc.email_to }}" || "{{ user }}",
-				"contact": "9773595372",
 				"order_id": "{{ doc.name }}",
 			},
 			"notes": {
 				"payment_request": "{{ doc.name }}",
 				"reference_doctype": "{{ doc.reference_doctype }}",
-				"reference_docname": "{{ doc.reference_docname }}"
+				"reference_docname": "{{ doc.reference_name }}"
 			},
 			"theme": {
 				"color": "#4B4C9D"

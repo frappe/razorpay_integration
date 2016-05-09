@@ -3,7 +3,7 @@
 # For license information, please see license.txt
 
 from __future__ import unicode_literals
-import frappe
+import frappe, json
 from frappe.model.document import Document
 from frappe import _
 from frappe.utils import get_url
@@ -55,25 +55,22 @@ def capture_payment():
 		
 		try:
 			resp = post_request("https://api.razorpay.com/v1/payments/{0}/capture".format(doc.name),
-				data={"amount": doc.data.get("amount")},
+				data={"amount": json.loads(doc.data).get("amount")},
 				auth=frappe._dict({"api_key": api_key, "api_secret": api_secret}))
-			if resp.get("status") == "authorized":
+			if resp.get("status") == "captured":
 				frappe.db.set_value("Razorpay Payment", doc.name, "status", "Captured")
 			
 		except AuthenticationError, e:
-			make_log_entry(e.message, {"api_key": api_key, "api_secret": api_secret,
-				"doc_name": doc.name, "status": doc.status})
-			frappe.throw(_(e.message))
+			make_log_entry(e.message, json.dumps({"api_key": api_key, "api_secret": api_secret,
+				"doc_name": doc.name, "status": doc.status}))
 			
 		except InvalidRequest, e:
-			make_log_entry(e.message, {"api_key": api_key, "api_secret": api_secret,
-				"doc_name": doc.name, "status": doc.status})
-			frappe.throw(_(e.message))
+			make_log_entry(e.message, json.dumps({"api_key": api_key, "api_secret": api_secret,
+				"doc_name": doc.name, "status": doc.status}))
 			
 		except GatewayError, e:
-			make_log_entry(e.message, {"api_key": api_key, "api_secret": api_secret,
-				"doc_name": doc.name, "status": doc.status})
-			frappe.throw(_(e.message))
+			make_log_entry(e.message, json.dumps({"api_key": api_key, "api_secret": api_secret,
+				"doc_name": doc.name, "status": doc.status}))
 
 def capture_missing_payments():
 	api_key, api_secret = frappe.db.get_value("Razorpay Settings", None, ["api_key", "api_secret"])
