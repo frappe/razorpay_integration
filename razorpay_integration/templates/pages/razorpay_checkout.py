@@ -3,6 +3,7 @@
 from __future__ import unicode_literals
 import frappe
 from frappe import _
+from razorpay_integration.utils import make_log_entry, validate_transaction_currency
 from razorpay_integration.exceptions import InvalidRequest, AuthenticationError, GatewayError
 
 no_cache = 1
@@ -11,6 +12,8 @@ no_sitemap = 1
 def get_context(context):
 	context.no_cache = 1
 	payment_req = frappe.get_doc(frappe.form_dict.doctype, frappe.form_dict.docname)
+	
+	validate_transaction_currency
 	
 	if payment_req.status == "Paid":
 		frappe.redirect_to_message(_('Already Paid'), _('You have already paid for this order'))
@@ -26,35 +29,39 @@ def get_context(context):
 @frappe.whitelist(allow_guest=True)
 def make_payment(razorpay_payment_id, options, reference_doctype, reference_docname):
 	try:
-		razorpay_express_payment = frappe.get_doc({
-			"doctype": "Razorpay Express Payment",
+		razorpay_payment = frappe.get_doc({
+			"doctype": "Razorpay Payment",
 			"razorpay_payment_id": razorpay_payment_id,
 			"data": options,
 			"reference_doctype": reference_doctype,
 			"reference_docname": reference_docname
 		})
-	
-		razorpay_express_payment.insert(ignore_permissions=True)
-	
-		if frappe.db.get_value("Razorpay Express Payment", razorpay_express_payment.name, "status") == "Authorized":
+
+		razorpay_payment.insert(ignore_permissions=True)
+
+		if frappe.db.get_value("Razorpay Express Payment", razorpay_payment.name, "status") == "Authorized":
 			return {
-				"redirect_to": razorpay_express_payment.flags.redirect_to or "razorpay-payment-success",
+				"redirect_to": razorpay_payment.flags.redirect_to or "razorpay-payment-success",
 				"status": 200
 			}
-			
+
 	except AuthenticationError, e:
-		frappe.redirect_to_message(_('Already Paid'), _('You have already paid for this order'))
-		return 
+		make_log_entry(e.message, options)
+		return{
+			"redirect_to": frappe.redirect_to_message(_('Server Error'), _("Seems issue with server's razorpay config. Provider will contact you on this front ")),
+			"status": 200
+		}
+
 	except InvalidRequest, e:
+		make_log_entry(e.message, options)
 		return {
-			"redirect_to": "razorpay-payment-error",
+			"redirect_to": frappe.redirect_to_message(_('Server Error'), _("Seems issue with server's razorpay config. Provider will contact you on this front ")),
 			"status": 200
 		}
+		
 	except GatewayError, e:
+		make_log_entry(e.message, options)
 		return {
-			"redirect_to": "razorpay-payment-error",
+			"redirect_to": frappe.redirect_to_message(_('Server Error'), _("Seems issue with server's razorpay config. Provider will contact you on this front ")),
 			"status": 200
 		}
-
-
-	

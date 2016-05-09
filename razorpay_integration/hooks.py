@@ -72,7 +72,11 @@ app_license = "MIT"
 
 doc_events = {
 	"Payment Request": {
+		"validate": "razorpay_integration.razorpay_integration.doctype.razorpay_settings.razorpay_settings.validate_razorpay_credentials",
 		"get_payment_url": "razorpay_integration.utils.get_payment_url"
+	},
+	"Shopping Cart Settings": {
+		"validate": "razorpay_integration.utils.validate_price_list_currency"
 	}
 }
 
@@ -81,8 +85,8 @@ doc_events = {
 
 scheduler_events = {
 	"all": [
-		"razorpay_integration.razorpay_integration.doctype.razorpay_express_payment.razorpay_express_payment.authorise_payment",
-		"razorpay_integration.razorpay_integration.doctype.razorpay_express_payment.razorpay_express_payment.capture_payment"
+		"razorpay_integration.razorpay_integration.doctype.razorpay_payment.razorpay_payment.authorise_payment",
+		"razorpay_integration.razorpay_integration.doctype.razorpay_payment.razorpay_payment.capture_payment"
 	]
 }
 

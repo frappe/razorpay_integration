@@ -12,20 +12,25 @@ from razorpay_integration.exceptions import AuthenticationError
 
 class RazorpaySettings(Document):
 	def validate(self):
-		self.validate_razorpay_credentials()
+		validate_razorpay_credentials(razorpay_settings=frappe._dict({
+			"api_key": self.api_key,
+			"api_secret": self.api_secret
+		}))
 	
-	def validate_razorpay_credentials(self):
-		try:
-			get_request("https://api.razorpay.com/v1/payments", frappe._dict({
-				"api_key": self.api_key,
-				"api_secret": self.api_secret
-			}))
-		except AuthenticationError, e:
-			frappe.throw(_(e.message))
-
 	def on_update(self):
 		create_payment_gateway_and_account()
 
+def validate_razorpay_credentials(doc=None, method=None, razorpay_settings=None):
+	if not razorpay_settings:
+		razorpay_settings = frappe.get_doc("Razorpay Settings")
+	
+	try:
+		get_request(url="https://api.razorpay.com/v1/payments", auth=frappe._dict({
+			"api_key": razorpay_settings.api_key,
+			"api_secret": razorpay_settings.api_secret
+		}))
+	except AuthenticationError, e:
+		frappe.throw(_(e.message))
 
 def create_payment_gateway_and_account():
 	"""If ERPNext is installed, create Payment Gateway and Payment Gateway Account"""

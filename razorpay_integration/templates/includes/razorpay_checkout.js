@@ -12,7 +12,13 @@ $(document).ready(function(){
 			"prefill": {
 				"name": "{{ customer_name }}",
 				"email": "{{ doc.email_to }}" || "{{ user }}",
-				"contact": "9773595372"
+				"contact": "9773595372",
+				"order_id": "{{ doc.name }}",
+			},
+			"notes": {
+				"payment_request": "{{ doc.name }}",
+				"reference_doctype": "{{ doc.reference_doctype }}",
+				"reference_docname": "{{ doc.reference_docname }}"
 			},
 			"theme": {
 				"color": "#4B4C9D"
@@ -34,6 +40,7 @@ razorpay.make_payment_log = function(response, options, doctype, docname){
 	frappe.call({
 		method:"razorpay_integration.templates.pages.razorpay_checkout.make_payment",
 		freeze:true,
+		headers: {"X-Requested-With": "XMLHttpRequest"},
 		args: {
 			"razorpay_payment_id": response.razorpay_payment_id,
 			"options": options,
@@ -41,7 +48,6 @@ razorpay.make_payment_log = function(response, options, doctype, docname){
 			"reference_docname": docname
 		},
 		callback: function(r){
-			console.log(r.message)
 			if (r.message && r.message.status == 200) {
 				window.location.href = r.message.redirect_to
 			}

@@ -7,13 +7,15 @@ import frappe
 from frappe.model.document import Document
 from frappe import _
 from frappe.utils import get_url
+from razorpay_integration.utils import make_log_entry
 from razorpay_integration.razorpay_requests import get_request, post_request
 from razorpay_integration.exceptions import InvalidRequest, AuthenticationError, GatewayError
 
-class RazorpayExpressPayment(Document):
+class RazorpayPayment(Document):
 	def on_update(self):
 		api_key, api_secret = frappe.db.get_value("Razorpay Settings", None, ["api_key", "api_secret"])
-		confirm_payment(self, api_key, api_secret)
+		if self.status != "Authorized":
+			confirm_payment(self, api_key, api_secret)
 		set_redirect(self)
 
 def authorise_payment():
@@ -34,7 +36,7 @@ def confirm_payment(doc, api_key, api_secret):
 		auth=frappe._dict({"api_key": api_key, "api_secret": api_secret}))
 	
 	if resp.get("status") == "authorized":
-		frappe.db.set_value("Razorpay Express Payment", doc.name, "status", "Authorized")
+		frappe.db.set_value("Razorpay Payment", doc.name, "status", "Authorized")
 		doc.flags.status_changed_to = "Authorized"
 		
 def capture_payment():
@@ -48,28 +50,63 @@ def capture_payment():
 	
 	api_key, api_secret = frappe.db.get_value("Razorpay Settings", None, ["api_key", "api_secret"])
 	
-	for doc in frappe.get_all("Razorpay Express Payment", filters={"status": "Authorized"},
+	for doc in frappe.get_all("Razorpay Payment", filters={"status": "Authorized"},
 		fields=["name", "data"]):
 		
-		url = "https://api.razorpay.com/v1/payments/{0}/capture".format(doc.name)
 		try:
-			resp = post_request(url, data={"amount": doc.data.get("amount")},
+			resp = post_request("https://api.razorpay.com/v1/payments/{0}/capture".format(doc.name),
+				data={"amount": doc.data.get("amount")},
 				auth=frappe._dict({"api_key": api_key, "api_secret": api_secret}))
 			if resp.get("status") == "authorized":
-				frappe.db.set_value("Razorpay Express Payment", doc.name, "status", "Captured")
+				frappe.db.set_value("Razorpay Payment", doc.name, "status", "Captured")
 			
 		except AuthenticationError, e:
+			make_log_entry(e.message, {"api_key": api_key, "api_secret": api_secret,
+				"doc_name": doc.name, "status": doc.status})
 			frappe.throw(_(e.message))
+			
 		except InvalidRequest, e:
+			make_log_entry(e.message, {"api_key": api_key, "api_secret": api_secret,
+				"doc_name": doc.name, "status": doc.status})
 			frappe.throw(_(e.message))
+			
 		except GatewayError, e:
+			make_log_entry(e.message, {"api_key": api_key, "api_secret": api_secret,
+				"doc_name": doc.name, "status": doc.status})
 			frappe.throw(_(e.message))
+
+def capture_missing_payments():
+	api_key, api_secret = frappe.db.get_value("Razorpay Settings", None, ["api_key", "api_secret"])
+	
+	resp = get_request("https://api.razorpay.com/v1/payments",
+		auth=frappe._dict({"api_key": api_key, "api_secret": api_secret}))
+	
+	for payment in resp.get("items"):
+		if payment.get("status") == "authorized" and not frappe.db.exists("Razorpay Payment", payment.get("id")):
+			razorpay_payment = frappe.get_doc({
+				"doctype": "Razorpay Payment",
+				"razorpay_payment_id": payment.get("id"),
+				"data": {
+					"amount": payment["amount"],
+					"description": payment["description"],
+					"email": payment["email"],
+					"contact": payment["contact"],
+					"payment_request": payment["notes"]["payment_request"],
+					"reference_doctype": payment["notes"]["reference_doctype"],
+					"reference_docname": payment["notes"]["reference_docname"]
+				},
+				"status": "Authorized",
+				"reference_doctype": "Payment Request",
+				"reference_docname": payment["notes"]["payment_request"]
+			})
+	
+			razorpay_payment.insert(ignore_permissions=True)
 
 def set_redirect(razorpay_express_payment):
 	"""
 		ERPNext related redirects.
-		You need to set Razorpay Express Payment.flags.redirect_to on status change.
-		Called via RazorpayExpressPayment.on_update
+		You need to set Razorpay Payment.flags.redirect_to on status change.
+		Called via RazorpayPayment.on_update
 	"""
 	if "erpnext" not in frappe.get_installed_apps():
 		return

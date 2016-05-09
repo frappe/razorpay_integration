@@ -8,5 +8,5 @@ import unittest
 
 # test_records = frappe.get_test_records('Razorpay Express Payment')
 
-class TestRazorpayExpressPayment(unittest.TestCase):
+class TestRazorpayPayment(unittest.TestCase):
 	pass

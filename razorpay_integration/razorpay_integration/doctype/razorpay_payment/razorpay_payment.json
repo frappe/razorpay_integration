@@ -151,7 +151,7 @@
  "modified": "2016-04-26 15:49:11.346835", 
  "modified_by": "Administrator", 
  "module": "Razorpay Integration", 
- "name": "Razorpay Express Payment", 
+ "name": "Razorpay Payment", 
  "name_case": "", 
  "owner": "Administrator", 
  "permissions": [
