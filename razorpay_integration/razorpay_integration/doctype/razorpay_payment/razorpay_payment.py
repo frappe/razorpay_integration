@@ -15,7 +15,7 @@ class RazorpayPayment(Document):
 	def on_update(self):
 		api_key, api_secret = frappe.db.get_value("Razorpay Settings", None, ["api_key", "api_secret"])
 		if self.status != "Authorized":
-			confirm_payment(self, api_key, api_secret)
+			confirm_payment(self, api_key, api_secret, self.flags.is_sandbox)
 		set_redirect(self)
 
 def authorise_payment():
@@ -26,20 +26,23 @@ def authorise_payment():
 		confirm_payment(doc, api_key, api_secret)
 		set_redirect(doc)
 
-def confirm_payment(doc, api_key, api_secret):
+def confirm_payment(doc, api_key, api_secret, is_sandbox=False):
 	"""
 		An authorization is performed when user’s payment details are successfully authenticated by the bank.
 		The money is deducted from the customer’s account, but will not be transferred to the merchant’s account
 		until it is explicitly captured by merchant.
 	"""
-	resp = get_request("https://api.razorpay.com/v1/payments/{0}".format(doc.name), 
-		auth=frappe._dict({"api_key": api_key, "api_secret": api_secret}))
+	if is_sandbox and doc.sanbox_response:
+		resp = doc.sanbox_response
+	else:
+		resp = get_request("https://api.razorpay.com/v1/payments/{0}".format(doc.name), 
+			auth=frappe._dict({"api_key": api_key, "api_secret": api_secret}))
 	
 	if resp.get("status") == "authorized":
 		frappe.db.set_value("Razorpay Payment", doc.name, "status", "Authorized")
 		doc.flags.status_changed_to = "Authorized"
 		
-def capture_payment():
+def capture_payment(razorpay_payment_id=None, is_sandbox=False, sanbox_response=None):
 	"""
 		Verifies the purchase as complete by the merchant.
 		After capture, the amount is transferred to the merchant within T+3 days
@@ -50,13 +53,25 @@ def capture_payment():
 	
 	api_key, api_secret = frappe.db.get_value("Razorpay Settings", None, ["api_key", "api_secret"])
 	
-	for doc in frappe.get_all("Razorpay Payment", filters={"status": "Authorized"},
+	filters = {"status": "Authorized"}
+	
+	if is_sandbox:
+		filters.update({
+			"razorpay_payment_id": razorpay_payment_id
+		})
+	
+	for doc in frappe.get_all("Razorpay Payment", filters=filters,
 		fields=["name", "data"]):
 		
 		try:
-			resp = post_request("https://api.razorpay.com/v1/payments/{0}/capture".format(doc.name),
-				data={"amount": json.loads(doc.data).get("amount")},
-				auth=frappe._dict({"api_key": api_key, "api_secret": api_secret}))
+			if is_sandbox and sanbox_response:
+				resp = sanbox_response
+				
+			else:
+				resp = post_request("https://api.razorpay.com/v1/payments/{0}/capture".format(doc.name),
+					data={"amount": json.loads(doc.data).get("amount")},
+					auth=frappe._dict({"api_key": api_key, "api_secret": api_secret}))
+				
 			if resp.get("status") == "captured":
 				frappe.db.set_value("Razorpay Payment", doc.name, "status", "Captured")
 			
