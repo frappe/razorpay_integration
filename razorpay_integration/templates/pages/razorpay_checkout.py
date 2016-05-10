@@ -38,8 +38,8 @@ def make_payment(razorpay_payment_id, options, reference_doctype, reference_docn
 		})
 
 		razorpay_payment.insert(ignore_permissions=True)
-
-		if frappe.db.get_value("Razorpay Express Payment", razorpay_payment.name, "status") == "Authorized":
+		
+		if frappe.db.get_value("Razorpay Payment", razorpay_payment.name, "status") == "Authorized":
 			return {
 				"redirect_to": razorpay_payment.flags.redirect_to or "razorpay-payment-success",
 				"status": 200

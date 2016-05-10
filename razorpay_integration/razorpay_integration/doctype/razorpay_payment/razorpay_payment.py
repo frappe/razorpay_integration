@@ -20,7 +20,7 @@ class RazorpayPayment(Document):
 
 def authorise_payment():
 	api_key, api_secret = frappe.db.get_value("Razorpay Settings", None, ["api_key", "api_secret"])
-	for doc in frappe.get_all("Razorpay Express Payment", filters={"status": "Created"},
+	for doc in frappe.get_all("Razorpay Payment", filters={"status": "Created"},
 		fields=["name", "data", "reference_doctype", "reference_docname"]):
 		
 		confirm_payment(doc, api_key, api_secret)
