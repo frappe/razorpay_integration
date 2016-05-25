@@ -49,19 +49,19 @@ def make_payment(razorpay_payment_id, options, reference_doctype, reference_docn
 		make_log_entry(e.message, options)
 		return{
 			"redirect_to": frappe.redirect_to_message(_('Server Error'), _("Seems issue with server's razorpay config. Don't worry, in case of failure amount will get refunded to your account.")),
-			"status": 200
+			"status": 401
 		}
 
 	except InvalidRequest, e:
 		make_log_entry(e.message, options)
 		return {
-			"redirect_to": frappe.redirect_to_message(_('Server Error'), _("SSeems issue with server's razorpay config. Don't worry, in case of failure amount will get refunded to your account.")),
-			"status": 200
+			"redirect_to": frappe.redirect_to_message(_('Server Error'), _("Seems issue with server's razorpay config. Don't worry, in case of failure amount will get refunded to your account.")),
+			"status": 400
 		}
 		
 	except GatewayError, e:
 		make_log_entry(e.message, options)
 		return {
 			"redirect_to": frappe.redirect_to_message(_('Server Error'), _("Seems issue with server's razorpay config. Don't worry, in case of failure amount will get refunded to your account.")),
-			"status": 200
+			"status": 500
 		}

@@ -50,6 +50,9 @@ razorpay.make_payment_log = function(response, options, doctype, docname){
 			if (r.message && r.message.status == 200) {
 				window.location.href = r.message.redirect_to
 			}
+			else if (r.message && ([401,400,500].indexOf(r.message.status) > -1)) {
+				window.location.href = r.message.redirect_to
+			}
 		}
 	})
 }
