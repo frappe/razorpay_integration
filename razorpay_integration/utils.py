@@ -10,12 +10,12 @@ def get_payment_url(doc, method):
 	if doc.docstatus == 1:
 		if doc.payment_gateway == "Razorpay":
 			frappe.local.response["type"] = "redirect"
-			frappe.local.response["location"] = "./razorpay_checkout?doctype=Payment Request&docname={0}".format(doc.name)
+			frappe.local.response["location"] = "./razorpay_checkout?payment_request={0}".format(doc.name)
 	else:
 		frappe.respond_as_web_page(_("Invalid Payment Request"),
 			_("Payment Request has been canceled by vendor"), success=False,
 			http_status_code=frappe.ValidationError.http_status_code)
-			
+
 def validate_price_list_currency(doc, method):
 	'''Called from Shopping Cart Settings hook'''
 	if doc.enabled and doc.enable_checkout:
@@ -39,11 +39,19 @@ def validate_transaction_currency(transaction_currency):
 
 def make_log_entry(error, params):
 	frappe.db.rollback()
-	
+
 	frappe.get_doc({
 		"doctype": "Razorpay Log",
 		"error": error,
 		"params": params
 	}).insert(ignore_permissions=True)
-	
+
 	frappe.db.commit()
+
+def get_razorpay_settings():
+	settings = frappe.db.get_singles_dict('Razorpay Settings')
+
+	if not settings.api_key and frappe.local.conf.get('Razorpay Settings', {}).get('api_key'):
+		settings = frappe._dict(frappe.local.conf['Razorpay Settings'])
+
+	return settings

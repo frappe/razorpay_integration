@@ -2,28 +2,30 @@ $(document).ready(function(){
 	(function(e){
 		var options = {
 			"key": "{{ api_key }}",
-			"amount": "{{ doc.grand_total }}" * 100, // 2000 paise = INR 20
-			"name": "{{ company }}",
-			"description": "{{ doc.subject }}",
-			"image": "./assets/erpnext/images/erp-icon.svg",
+			"amount": {{ amount }} * 100, // 2000 paise = INR 20
+			"name": "{{ title }}",
+			"description": "{{ description }}",
+			"image": "{{ brand_image }}",
 			"handler": function (response){
-				razorpay.make_payment_log(response, options, "{{ doc.doctype }}", "{{ doc.name }}");
+				razorpay.make_payment_log(response, options, "{{ doctype }}", "{{ name }}");
 			},
 			"prefill": {
-				"name": "{{ customer_name }}",
-				"email": "{{ doc.email_to }}" || "{{ user }}",
-				"order_id": "{{ doc.name }}",
+				"name": "{{ payer_name }}",
+				"email": "{{ payer_email }}",
+				"order_id": "{{ order_id }}",
 			},
 			"notes": {
-				"payment_request": "{{ doc.name }}",
-				"reference_doctype": "{{ doc.reference_doctype }}",
-				"reference_docname": "{{ doc.reference_name }}"
+				"doctype": "{{ doctype }}",
+				"name": "{{ name }}",
+				"payment_request": "{{ name }}", // backward compatibility
+				"reference_doctype": "{{ reference_doctype }}",
+				"reference_docname": "{{ reference_name }}"
 			},
 			"theme": {
 				"color": "#4B4C9D"
 			}
 		};
-		
+
 		var rzp = new Razorpay(options);
 		rzp.open();
 		//	e.preventDefault();
@@ -35,7 +37,7 @@ frappe.provide('razorpay');
 razorpay.make_payment_log = function(response, options, doctype, docname){
 	$('.razorpay-loading').addClass('hidden');
 	$('.razorpay-confirming').removeClass('hidden');
-	
+
 	frappe.call({
 		method:"razorpay_integration.templates.pages.razorpay_checkout.make_payment",
 		freeze:true,
