@@ -6,7 +6,6 @@ from __future__ import unicode_literals
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from erpnext.setup.setup_wizard.setup_wizard import create_bank_account
 from razorpay_integration.razorpay_requests import get_request
 from razorpay_integration.exceptions import AuthenticationError
 
@@ -16,14 +15,14 @@ class RazorpaySettings(Document):
 			"api_key": self.api_key,
 			"api_secret": self.api_secret
 		}))
-	
+
 	def on_update(self):
 		create_payment_gateway_and_account()
 
 def validate_razorpay_credentials(doc=None, method=None, razorpay_settings=None):
 	if not razorpay_settings:
 		razorpay_settings = frappe.get_doc("Razorpay Settings")
-	
+
 	try:
 		get_request(url="https://api.razorpay.com/v1/payments", auth=frappe._dict({
 			"api_key": razorpay_settings.api_key,
@@ -50,6 +49,8 @@ def create_payment_gateway():
 		payment_gateway.insert(ignore_permissions=True)
 
 def create_payment_gateway_account():
+	from erpnext.setup.setup_wizard.setup_wizard import create_bank_account
+
 	company = frappe.db.get_value("Global Defaults", None, "default_company")
 	if not company:
 		return
