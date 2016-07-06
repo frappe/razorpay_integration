@@ -29,7 +29,7 @@ def validate_razorpay_credentials(doc=None, method=None, razorpay_settings=None)
 			"api_secret": razorpay_settings.api_secret
 		}))
 	except AuthenticationError, e:
-		frappe.throw(_(e.message), exc=AuthenticationError)
+		frappe.throw(_(e.message))
 
 def create_payment_gateway_and_account():
 	"""If ERPNext is installed, create Payment Gateway and Payment Gateway Account"""
