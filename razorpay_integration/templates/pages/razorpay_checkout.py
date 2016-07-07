@@ -39,7 +39,7 @@ def get_context(context):
 		context.payer_name = reference_doc.customer_name
 		context.payer_email = reference_doc.get('email_to') or frappe.session.user
 		context.order_id = payment_req.name
-		context.reference_doctype = payment_req.reference_doc.doctype
+		context.reference_doctype = payment_req.reference_doctype
 		context.reference_name = payment_req.reference_name
 
 	# all these keys exist in form_dict

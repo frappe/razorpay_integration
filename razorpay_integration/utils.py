@@ -51,7 +51,10 @@ def make_log_entry(error, params):
 def get_razorpay_settings():
 	settings = frappe.db.get_singles_dict('Razorpay Settings')
 
-	if not settings.api_key and frappe.local.conf.get('Razorpay Settings', {}).get('api_key'):
+	if settings.api_key and settings.api_secret:
+		settings["api_secret"] = frappe.get_doc("Razorpay Settings").get_password(fieldname="api_secret")
+
+	elif not settings.api_key and frappe.local.conf.get('Razorpay Settings', {}).get('api_key'):
 		settings = frappe._dict(frappe.local.conf['Razorpay Settings'])
 
 	return settings
