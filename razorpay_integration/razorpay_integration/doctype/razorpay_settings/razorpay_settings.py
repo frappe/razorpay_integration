@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from razorpay_integration.utils import get_razorpay_settings
 from razorpay_integration.razorpay_requests import get_request
 from razorpay_integration.exceptions import AuthenticationError
 
@@ -13,7 +14,7 @@ class RazorpaySettings(Document):
 	def validate(self):
 		validate_razorpay_credentials(razorpay_settings=frappe._dict({
 			"api_key": self.api_key,
-			"api_secret": self.api_secret
+			"api_secret": self.get_password(fieldname="api_secret")
 		}))
 
 	def on_update(self):
@@ -21,7 +22,7 @@ class RazorpaySettings(Document):
 
 def validate_razorpay_credentials(doc=None, method=None, razorpay_settings=None):
 	if not razorpay_settings:
-		razorpay_settings = frappe.get_doc("Razorpay Settings")
+		razorpay_settings = get_razorpay_settings()
 
 	try:
 		get_request(url="https://api.razorpay.com/v1/payments", auth=frappe._dict({
