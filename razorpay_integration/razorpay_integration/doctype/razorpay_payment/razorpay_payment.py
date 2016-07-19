@@ -41,6 +41,11 @@ def confirm_payment(doc, api_key, api_secret, is_sandbox=False):
 	if resp.get("status") == "authorized":
 		doc.db_set('status', 'Authorized')
 		doc.run_method('on_payment_authorized')
+
+		if doc.reference_doctype and doc.reference_docname:
+			ref = frappe.get_doc(doc.reference_doctype, doc.reference_docname)
+			ref.run_method('on_payment_authorized')
+
 		doc.flags.status_changed_to = "Authorized"
 
 def capture_payment(razorpay_payment_id=None, is_sandbox=False, sanbox_response=None):
