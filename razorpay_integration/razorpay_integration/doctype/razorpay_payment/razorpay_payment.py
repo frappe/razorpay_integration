@@ -80,15 +80,15 @@ def capture_payment(razorpay_payment_id=None, is_sandbox=False, sanbox_response=
 			if resp.get("status") == "captured":
 				frappe.db.set_value("Razorpay Payment", doc.name, "status", "Captured")
 
-		except AuthenticationError, e:
+		except AuthenticationError as e:
 			make_log_entry(e.message, json.dumps({"api_key": settings.api_key, "api_secret": settings.api_secret,
 				"doc_name": doc.name, "status": doc.status}))
 
-		except InvalidRequest, e:
+		except InvalidRequest as e:
 			make_log_entry(e.message, json.dumps({"api_key": settings.api_key, "api_secret": settings.api_secret,
 				"doc_name": doc.name, "status": doc.status}))
 
-		except GatewayError, e:
+		except GatewayError as e:
 			make_log_entry(e.message, json.dumps({"api_key": settings.api_key, "api_secret": settings.api_secret,
 				"doc_name": doc.name, "status": doc.status}))
 
@@ -157,4 +157,3 @@ def set_redirect(razorpay_express_payment):
 				}).get(success_url, "me")
 			else:
 				razorpay_express_payment.flags.redirect_to = get_url("/orders/{0}".format(reference_doc.reference_name))
-
